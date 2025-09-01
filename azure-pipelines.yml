@@ -19,7 +19,7 @@ stages:
         versionSpec: '20.x'
 
     - script: |
-        npm ci
+        npm install
         npm run build
       displayName: npm ci & build
 
