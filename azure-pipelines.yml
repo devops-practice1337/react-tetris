@@ -50,7 +50,6 @@ stages:
         publishLocation: 'pipeline'
 
 # ---------- DEPLOY ----------
-# ---------- DEPLOY ----------
 - stage: Deploy_Dev
   displayName: Deploy to dev1
   dependsOn: Build
