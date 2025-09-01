@@ -79,6 +79,21 @@ stages:
               set -e
               sudo -n mkdir -p /var/www/myapp
               rsync -av --delete "$(Pipeline.Workspace)/react_build/" "/var/www/myapp/"
+              sudo -n tee /etc/nginx/sites-available/myapp >/dev/null <<'CONF'
+              server {
+                listen 9999;
+                server_name _;
+                root /var/www/myapp;
+                index index.html;
+                location / { try_files $uri /index.html; }
+                location ~* \.(?:js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
+                  expires 1y;
+                  add_header Cache-Control "public, immutable";
+                  access_log off;
+                }
+              }
+              CONF
+              sudo -n ln -sf /etc/nginx/sites-available/myapp /etc/nginx/sites-enabled/myapp-9999
             displayName: Sync files to web root
 
           - script: |
