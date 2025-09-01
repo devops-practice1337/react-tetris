@@ -26,7 +26,7 @@ stages:
     - task: PublishPipelineArtifact@1
       displayName: Publish build artifact
       inputs:
-        targetPath: 'build'
+        targetPath: '$(Build.SourcesDirectory)/build'
         artifact: 'react_build'
         publishLocation: 'pipeline'
 
