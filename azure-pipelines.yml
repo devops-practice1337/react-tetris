@@ -50,6 +50,7 @@ stages:
         publishLocation: 'pipeline'
 
 # ---------- DEPLOY ----------
+# ---------- DEPLOY ----------
 - stage: Deploy_Dev
   displayName: Deploy to dev1
   dependsOn: Build
@@ -57,27 +58,31 @@ stages:
   jobs:
   - deployment: DeployToDev1
     displayName: Deploy to Environment dev1
-    environment: dev1
+    environment:
+      name: dev1
+      resourceType: virtualMachine
+      # If your environment has multiple VMs, set the exact resource name shown in the UI:
+      # resourceName: dev1-vm
     strategy:
       runOnce:
         deploy:
           steps:
+          - script: |
+              echo "whoami: $(whoami)"; hostname
+            displayName: Sanity check (runs on dev1)
+
           - task: DownloadPipelineArtifact@2
-            displayName: Download artifact
             inputs:
               artifact: 'react_build'
               path: '$(Pipeline.Workspace)/react_build'
 
           - script: |
               set -e
-              sudo mkdir -p /var/www/myapp
+              sudo -n mkdir -p /var/www/myapp
               rsync -av --delete "$(Pipeline.Workspace)/react_build/" "/var/www/myapp/"
             displayName: Sync files to web root
 
           - script: |
-              if command -v systemctl >/dev/null 2>&1; then
-                sudo systemctl reload nginx || sudo systemctl restart nginx
-              else
-                sudo service nginx reload || sudo service nginx restart
-              fi
+              sudo -n systemctl reload nginx || sudo -n systemctl restart nginx
             displayName: Reload web server
+
