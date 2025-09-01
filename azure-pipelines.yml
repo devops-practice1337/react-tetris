@@ -1,67 +1,21 @@
-# azure-pipelines.yml
-trigger:
-- master
+# Node.js with React 
+# Build a Node.js project that uses React. 
+# Add steps that analyze code, save build artifacts, deploy, and more: 
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
-# Uses your existing self-hosted agent pool for the build
-pool:
-  name: LocalPool
+trigger: 
+- master 
 
-stages:
-# ---------- BUILD ----------
-- stage: Build
-  displayName: Build React app
-  jobs:
-  - job: Build
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '20.x'
-      displayName: Install Node.js
+pool: 
+  LocalPool 
 
-    - script: |
-        npm ci
-        npm run build
-      displayName: npm ci & build
+steps:
+  - task: NodeTool@0
+    inputs: 
+      versionSpec: '20.x' 
+    displayName: 'Install Node.js'
 
-    - task: PublishPipelineArtifact@1
-      displayName: Publish build artifact
-      inputs:
-        targetPath: 'build'                # React output folder
-        artifact: 'react_build'            # Artifact name
-        publishLocation: 'pipeline'
-
-# ---------- DEPLOY ----------
-- stage: Deploy_Dev
-  displayName: Deploy to dev1
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - deployment: DeployToDev1
-    displayName: Deploy to Environment dev1
-    environment: 'dev1'                    # <-- your Azure DevOps Environment name
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          # This runs on the dev1 environment VM (agent installed via Environments)
-          - task: DownloadPipelineArtifact@2
-            displayName: Download artifact
-            inputs:
-              artifact: 'react_build'
-              path: '$(Pipeline.Workspace)/react_build'
-
-          - script: |
-              set -e
-              sudo mkdir -p /var/www/myapp
-              # Use rsync for fast, safe delta deploys
-              rsync -av --delete "$(Pipeline.Workspace)/react_build/" "/var/www/myapp/"
-            displayName: Sync files to web root
-
-          - script: |
-              # Reload nginx (adjust if you use another web server)
-              if command -v systemctl >/dev/null 2>&1; then
-                sudo systemctl reload nginx || sudo systemctl restart nginx
-              else
-                sudo service nginx reload || sudo service nginx restart
-              fi
-            displayName: Reload web server
+  - script: | 
+      npm install 
+      npm run build 
+    displayName: 'npm install and build'
