@@ -3,6 +3,9 @@
 trigger:
 - master
 
+variables:
+  APP_DIR: '.'
+
 stages:
 # ---------- BUILD ----------
 - stage: Build
@@ -19,14 +22,30 @@ stages:
         versionSpec: '20.x'
 
     - script: |
+        set -e
+        echo "Working dir: $(Build.SourcesDirectory)/$(APP_DIR)"
+        cd "$(Build.SourcesDirectory)/$(APP_DIR)"
         npm install
         npm run build
       displayName: npm ci & build
 
+# Detect build output dir and set $(BUILD_OUTPUT_DIR)
+    - script: |
+        set -e
+        CANDIDATES=$(find "$(Build.SourcesDirectory)" -maxdepth 3 -type d \( -name build -o -name dist -o -name out -o -name .next \) | sort)
+        if [ -z "$CANDIDATES" ]; then
+          echo "##vso[task.logissue type=error]No build output folder found (looked for build, dist, out, .next)."
+          exit 1
+        fi
+        FIRST=$(echo "$CANDIDATES" | head -n1)
+        echo "Detected build output: $FIRST"
+        echo "##vso[task.setvariable variable=BUILD_OUTPUT_DIR]$FIRST"
+      displayName: Detect build output
+
     - task: PublishPipelineArtifact@1
       displayName: Publish build artifact
       inputs:
-        targetPath: '$(Build.SourcesDirectory)/build'
+        targetPath: '$(BUILD_OUTPUT_DIR)'
         artifact: 'react_build'
         publishLocation: 'pipeline'
 
