@@ -58,6 +58,8 @@ stages:
   - deployment: DeployToDev1
     displayName: Deploy to Environment dev1
     environment: dev1
+    pool:
+      name: LocalPool
     strategy:
       runOnce:
         deploy:
